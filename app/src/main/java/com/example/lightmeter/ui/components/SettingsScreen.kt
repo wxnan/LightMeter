@@ -661,7 +661,7 @@ fun OtherSettings(modifier: Modifier = Modifier) {
     val handleFeedback = {
         android.widget.Toast.makeText(
             context,
-            "感谢您的反馈！请发送邮件至 feedback@example.com",
+            "感谢您的反馈！请发送邮件至 xiaon_ooossltsbk@aka.yeah.net",
             android.widget.Toast.LENGTH_SHORT
         ).show()
     }
@@ -669,8 +669,8 @@ fun OtherSettings(modifier: Modifier = Modifier) {
     val handleShare = {
         val shareIntent = Intent(Intent.ACTION_SEND).apply {
             type = "text/plain"
-            putExtra(Intent.EXTRA_SUBJECT, "照度测量仪")
-            putExtra(Intent.EXTRA_TEXT, "照度测量仪 | 专业级手机照度测量计算工具\n\n下载链接：https://pan.baidu.com/s/12cQ3gz14A646O3R8O-puQA?pwd=smr9")
+            putExtra(Intent.EXTRA_SUBJECT, "照度测量仪") 
+            putExtra(Intent.EXTRA_TEXT, "照度测量仪 | 专业级手机照度测量计算工具\n\n官网链接：https://github.com/wxnan/LightMeter \n网盘下载：https://pan.baidu.com/s/12cQ3gz14A646O3R8O-puQA?pwd=smr9")
         }
         context.startActivity(Intent.createChooser(shareIntent, "分享应用"))
     }

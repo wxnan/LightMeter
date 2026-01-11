@@ -9,9 +9,8 @@
 
 ## 📥 下载安装
 
-
-[GitHub下载](https://github.com/wxnan/LightMeter/releases) | [百度网盘下载](https://pan.baidu.com/s/12cQ3gz14A646O3R8O-puQA?pwd=smr9)
-
+[<img src="docs/get-it-on-github.png" alt="Get it on GitHub" height="80">](https://github.com/wxnan/LightMeter/releases/latest/)
+[<img src="docs/get-it-on-openapk.png" alt="Get it on OpenAPK" height="80">](https://www.openapk.net/zh/lightmeter/com.example.lightmeter/)
 
 ---
 
@@ -104,7 +103,11 @@ LightMeter 是一款专为Android设备设计的专业照度测量与计算工�
 
 [点击下载最新版本](https://github.com/wxnan/LightMeter/releases)
 
-**方式二：百度网盘下载**
+**方式二：OpenAPK 下载**
+
+[点击下载最新版本](https://www.openapk.net/zh/lightmeter/com.example.lightmeter/)
+
+**方式三：百度网盘下载**
 
 [点击下载最新版本](https://pan.baidu.com/s/12cQ3gz14A646O3R8O-puQA?pwd=smr9)
 
