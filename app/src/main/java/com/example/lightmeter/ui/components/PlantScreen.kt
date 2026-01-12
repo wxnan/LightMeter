@@ -13,6 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.activity.compose.BackHandler
 import com.example.lightmeter.data.*
 import com.example.lightmeter.ui.theme.*
 import com.example.lightmeter.ui.icons.CustomIcons
@@ -341,6 +342,8 @@ fun PlantSelector(
     onBack: () -> Unit,
     modifier: Modifier = Modifier
 ) {
+    BackHandler(onBack = onBack)
+    
     Column(
         modifier = modifier
             .fillMaxWidth()

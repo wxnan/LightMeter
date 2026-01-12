@@ -599,7 +599,7 @@ fun CalculationResultCard(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "• 选择光通量 ≥ ${result.requiredLumensPerLight}lm 的灯具\n• LED灯泡参考：800lm≈10W，1200lm≈15W，1600lm≈20W\n• 建议预留10-15%余量，应对灯具光衰\n• 可调光灯具能适应不同使用场景",
+                        text = "• 选择光通量 ≥ ${result.requiredLumensPerLight}lm 的灯具\n• LED灯具的光效范围参考：80~100lm/W（光效与品牌、色温等多种因素有关）\n• 建议预留10-15%余量，应对灯具光衰\n• 如果是购买新吸顶灯灯芯替换旧灯芯，还需考虑灯罩透光率影响，建议在计算结果的基础上再适当增加20-30%\n• 可调光灯具能适应不同使用场景",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )
@@ -626,7 +626,7 @@ fun CalculationResultCard(
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
-                        text = "• 已考虑${lightType.label}的光效系数\n• 已根据层高${roomHeight}米进行修正\n• 维护系数${maintenanceFactor.label}已计入计算\n• 深色装修建议增加15-20%流明值",
+                        text = "• 已考虑${lightType.label}的利用系数\n• 已根据层高${roomHeight}米进行修正\n• 维护系数${maintenanceFactor.label}已计入计算\n• 深色装修建议增加15-20%流明值",
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.7f)
                     )

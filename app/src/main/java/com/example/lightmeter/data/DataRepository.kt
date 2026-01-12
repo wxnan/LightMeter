@@ -6,19 +6,20 @@ object DataRepository {
         SceneType(
             id = "reading",
             name = "阅读区",
-            recommendedLux = "500-750",
+            recommendedLux = "300-750",
             colorTemp = "4000-5000K",
             description = "需要充足且均匀的照明，避免产生阴影和眩光",
             tips = listOf(
                 "使用可调节台灯，光源位于书本前上方",
-                "避免光源直射眼睛",
+                "主照明500 lux以上",
                 "背景照明不低于150 lux",
                 "建议使用无频闪灯具"
             ),
             specialRequirements = listOf(
                 "显色指数 Ra>90",
-                "避免蓝光过强",
-                "可配合环境光使用"
+                "主照明区域建议低于1500 lux",
+                "避免与背景照明亮度差异过大",
+                "避免蓝光过强"
             )
         ),
         SceneType(
@@ -28,13 +29,14 @@ object DataRepository {
             colorTemp = "3000-4000K",
             description = "多功能空间，需要灵活的照明方案",
             tips = listOf(
-                "主照明150-200 lux",
-                "重点照明区域可增至300 lux",
+                "主照明150-300 lux",
+                "重点照明区域300 lux以上",
                 "使用多层次照明设计",
                 "可调节亮度满足不同需求"
             ),
             specialRequirements = listOf(
                 "均匀分布光源",
+                "色温不宜高于5000K",
                 "避免眩光",
                 "装饰照明营造氛围"
             )
@@ -46,10 +48,10 @@ object DataRepository {
             colorTemp = "3000-4000K",
             description = "营造温馨舒适的氛围，有利于放松和睡眠",
             tips = listOf(
-                "主照明100-150 lux即可",
-                "床头阅读灯300-500 lux",
+                "主照明150 lux以上",
+                "工作阅读区域需达到300 lux以上",
                 "使用暖色温灯光",
-                "安装调光开关"
+                "可调节亮度满足阅读、休息等不同需求"
             ),
             specialRequirements = listOf(
                 "避免强光刺激",
@@ -65,9 +67,9 @@ object DataRepository {
             description = "营造温馨就餐氛围，增强食欲",
             tips = listOf(
                 "餐桌上方200-300 lux",
-                "环境照明100-150 lux",
+                "环境照明150 lux以上",
                 "使用暖色温光源",
-                "吊灯距桌面60-80cm"
+                "吊灯距离桌面70-80cm"
             ),
             specialRequirements = listOf(
                 "显色指数 Ra>85",
@@ -78,12 +80,12 @@ object DataRepository {
         SceneType(
             id = "kitchen",
             name = "厨房",
-            recommendedLux = "200-500",
+            recommendedLux = "100-300",
             colorTemp = "3500-5000K",
             description = "工作区需要明亮清晰的照明，确保操作安全",
             tips = listOf(
-                "操作台面500 lux",
-                "整体照明300 lux",
+                "操作台面300 lux以上",
+                "整体照明200 lux",
                 "使用防水防油灯具",
                 "冷白光提高辨识度"
             ),
@@ -96,30 +98,30 @@ object DataRepository {
         SceneType(
             id = "bathroom",
             name = "卫生间",
-            recommendedLux = "150-300",
+            recommendedLux = "100-300",
             colorTemp = "3000-5000K",
             description = "镜前区域需要充足照明，整体明亮清洁",
             tips = listOf(
-                "镜前照明200-300 lux",
-                "整体照明150 lux",
+                "镜前照明300 lux以上",
+                "整体照明150 lux以上",
                 "使用防水灯具",
                 "避免产生阴影"
             ),
             specialRequirements = listOf(
                 "防水等级IP44以上",
                 "镜前无阴影照明",
-                "显色指数 Ra>80"
+                "镜前显色指数 Ra>90"
             )
         ),
         SceneType(
             id = "study",
             name = "书房",
-            recommendedLux = "300-750",
+            recommendedLux = "300-500",
             colorTemp = "3500-5000K",
             description = "长时间用眼场所，需要优质照明环境",
             tips = listOf(
-                "桌面阅读区500-750 lux",
-                "整体照明300 lux",
+                "桌面阅读区500 lux以上",
+                "整体照明300 lux以上",
                 "台灯+顶灯组合照明",
                 "避免明暗对比过大"
             ),
@@ -132,7 +134,7 @@ object DataRepository {
         SceneType(
             id = "corridor",
             name = "走廊",
-            recommendedLux = "75-100",
+            recommendedLux = "100-150",
             colorTemp = "3000-4000K",
             description = "保证基本通行安全，节能为主",
             tips = listOf(
@@ -155,7 +157,7 @@ object DataRepository {
             description = "保护儿童视力，营造活泼明亮的环境",
             tips = listOf(
                 "学习区域500-750 lux",
-                "游戏区域200-300 lux",
+                "整体照明200 lux以上",
                 "睡眠区域可调至30 lux",
                 "避免频闪和眩光"
             ),
