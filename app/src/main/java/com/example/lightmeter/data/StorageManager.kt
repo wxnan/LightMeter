@@ -19,6 +19,7 @@ class StorageManager(context: Context) {
         private const val KEY_SETTINGS = "settings"
         private const val KEY_SELECTED_PLANT_ID = "selected_plant_id"
         private const val KEY_SELECTED_SCENE_ID = "selected_scene_id"
+        private const val KEY_CUSTOM_PLANTS = "custom_plants"
         private const val TAG = "StorageManager"
     }
 
@@ -83,6 +84,28 @@ class StorageManager(context: Context) {
 
     fun loadSelectedSceneId(): String? {
         return prefs.getString(KEY_SELECTED_SCENE_ID, null)
+    }
+    
+    fun saveCustomPlants(customPlants: Map<String, Plant>) {
+        try {
+            val json = gson.toJson(customPlants)
+            prefs.edit().putString(KEY_CUSTOM_PLANTS, json).commit()
+            Log.d(TAG, "Custom plants saved successfully")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error saving custom plants", e)
+        }
+    }
+    
+    fun loadCustomPlants(): Map<String, Plant> {
+        return try {
+            val json = prefs.getString(KEY_CUSTOM_PLANTS, null) ?: return emptyMap()
+            Log.d(TAG, "Loading custom plants from storage")
+            val type = object : TypeToken<Map<String, Plant>>() {}.type
+            gson.fromJson<Map<String, Plant>>(json, type) ?: emptyMap()
+        } catch (e: Exception) {
+            Log.e(TAG, "Error loading custom plants", e)
+            emptyMap()
+        }
     }
 
     fun clearMeasurements() {

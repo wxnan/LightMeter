@@ -147,13 +147,17 @@ fun LightMeterApp(
                     )
                 }
                 TabType.PLANT -> {
-                    val selectedPlant = state.selectedPlant ?: com.example.lightmeter.data.DataRepository.plants[0]
+                    val selectedPlant = state.selectedPlant ?: com.example.lightmeter.data.DataRepository.getAllPlants()[0]
                     PlantScreen(
                         currentLux = state.currentLux,
                         selectedPlant = selectedPlant,
                         showSelector = state.showPlantSelector,
                         onToggleSelector = { viewModel.togglePlantSelector() },
-                        onSelectPlant = { viewModel.selectPlant(it) }
+                        onSelectPlant = { viewModel.selectPlant(it) },
+                        onUpdatePlant = { viewModel.updatePlant(it) },
+                        displayMode = state.displayMode,
+                        ppfdConversionFactor = state.settings.ppfdConversionFactor,
+                        onToggleDisplayMode = { viewModel.toggleDisplayMode() }
                     )
                 }
                 TabType.SCENE -> {
@@ -172,6 +176,9 @@ fun LightMeterApp(
                         onThemeChange = { viewModel.setTheme(it) },
                         onCalibrationChange = { multiplier, offset ->
                             viewModel.setCalibration(multiplier, offset)
+                        },
+                        onPPFDChange = { factor ->
+                            viewModel.setPPFDConversionFactor(factor)
                         }
                     )
                 }

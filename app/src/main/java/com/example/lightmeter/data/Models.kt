@@ -17,7 +17,8 @@ data class DataPoint(
 data class AppSettings(
     val theme: ThemeMode = ThemeMode.LIGHT,
     val calibrationMultiplier: Float = 1f,
-    val calibrationOffset: Float = 0f
+    val calibrationOffset: Float = 0f,
+    val ppfdConversionFactor: Float = 0.0185f
 ) : Serializable
 
 enum class ThemeMode : Serializable {
@@ -46,6 +47,8 @@ data class Plant(
     val nameEn: String,
     val minLux: Int,
     val maxLux: Int,
+    val minPPFD: Int,
+    val maxPPFD: Int,
     val hoursPerDay: String,
     val lackSymptoms: List<String>,
     val excessSymptoms: List<String>,

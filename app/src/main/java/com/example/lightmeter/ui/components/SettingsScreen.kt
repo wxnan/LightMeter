@@ -34,13 +34,16 @@ fun SettingsScreen(
     settings: AppSettings,
     onThemeChange: (ThemeMode) -> Unit,
     onCalibrationChange: (Float, Float) -> Unit,
+    onPPFDChange: (Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showCalibration by remember { mutableStateOf(false) }
+    var showPPFD by remember { mutableStateOf(false) }
     var showGuide by remember { mutableStateOf(false) }
     var showFAQ by remember { mutableStateOf(false) }
     var tempMultiplier by remember { mutableStateOf(settings.calibrationMultiplier.toString()) }
     var tempOffset by remember { mutableStateOf(settings.calibrationOffset.toString()) }
+    var tempPPFDFactor by remember { mutableStateOf(settings.ppfdConversionFactor.toString()) }
     
     Column(
         modifier = modifier
@@ -67,6 +70,17 @@ fun SettingsScreen(
                 val multiplier = tempMultiplier.toFloatOrNull() ?: 1f
                 val offset = tempOffset.toFloatOrNull() ?: 0f
                 onCalibrationChange(multiplier, offset)
+            }
+        )
+        
+        PPFDSettings(
+            showPPFD = showPPFD,
+            factor = tempPPFDFactor,
+            onToggleShow = { showPPFD = !showPPFD },
+            onFactorChange = { tempPPFDFactor = it },
+            onSave = {
+                val factor = tempPPFDFactor.toFloatOrNull() ?: 0.0185f
+                onPPFDChange(factor)
             }
         )
         
@@ -415,6 +429,157 @@ fun CalibrationSettings(
 }
 
 @Composable
+fun PPFDSettings(
+    showPPFD: Boolean,
+    factor: String,
+    onToggleShow: () -> Unit,
+    onFactorChange: (String) -> Unit,
+    onSave: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Button(
+                onClick = onToggleShow,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                shape = RoundedCornerShape(0.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = CustomIcons.Sun,
+                            contentDescription = null,
+                            tint = Orange500
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "PPFD设置",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Icon(
+                        imageVector = if (showPPFD) CustomIcons.ExpandLess else CustomIcons.ExpandMore,
+                        contentDescription = null,
+                        tint = Gray400
+                    )
+                }
+            }
+            
+            if (showPPFD) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = "🌱 PPFD换算公式：",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "PPFD (μmol/m²·s) = Lux × 换算系数",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
+                            )
+                        }
+                    }
+                    
+                    OutlinedTextField(
+                        value = factor,
+                        onValueChange = onFactorChange,
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("换算系数（默认 0.0185）") },
+                        placeholder = { Text("0.0185") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        shape = RoundedCornerShape(12.dp)
+                    )
+                    Text(
+                        text = "阳光直射：0.0185，室内LED：0.012-0.015",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray500
+                    )
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        Button(
+                            onClick = onSave,
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("保存设置")
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                onFactorChange("0.0185")
+                                onSave()
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Text("重置")
+                        }
+                    }
+                    
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = "💡 说明：",
+                                color = MaterialTheme.colorScheme.onSurface,
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold
+                            )
+                            Text(
+                                text = "PPFD（光合有效辐射密度）是衡量植物可利用光能的指标。不同光源的换算系数不同，阳光直射约为0.0185，室内LED灯约为0.012-0.015。\n植物页面，点击实时照度显示卡片，可以进行切换。",
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
+                                style = MaterialTheme.typography.bodyMedium
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
 fun GuideSettings(
     showGuide: Boolean,
     onToggleShow: () -> Unit,
@@ -634,7 +799,7 @@ fun FAQSettings(
                     )
                     FAQItem(
                         question = "Q: 植物照度推荐值范围？",
-                        answer = "A: 推荐值数据来源于AI和网络，仅供参考。如果您有权威数据来源，请通过本应用的GitHub官方页面或“反馈建议”联系我，我将根据权威数据来源更新应用数据。"
+                        answer = "A: 推荐值数据来源于AI和网络，仅供参考。如果您有权威数据来源，请通过本应用的GitHub官方页面或“反馈建议”联系我。"
                     )
                 }
             }

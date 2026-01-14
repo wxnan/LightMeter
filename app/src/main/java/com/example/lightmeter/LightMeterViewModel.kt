@@ -26,7 +26,8 @@ data class LightMeterState(
     val selectedScene: SceneType? = null,
     val selectedPlant: Plant? = null,
     val showSceneSelector: Boolean = false,
-    val showPlantSelector: Boolean = false
+    val showPlantSelector: Boolean = false,
+    val displayMode: String = "lux"
 )
 
 class LightMeterViewModel : ViewModel(), SensorEventListener {
@@ -47,9 +48,12 @@ class LightMeterViewModel : ViewModel(), SensorEventListener {
                 val savedSettings = storageManager!!.loadSettings()
                 val savedPlantId = storageManager!!.loadSelectedPlantId()
                 val savedSceneId = storageManager!!.loadSelectedSceneId()
+                val savedCustomPlants = storageManager!!.loadCustomPlants()
+                
+                DataRepository.setCustomPlants(savedCustomPlants)
                 
                 val selectedPlant = savedPlantId?.let { id ->
-                    DataRepository.plants.find { it.id == id }
+                    DataRepository.getPlantById(id)
                 }
                 val selectedScene = savedSceneId?.let { id ->
                     DataRepository.scenes.find { it.id == id }
@@ -212,6 +216,19 @@ class LightMeterViewModel : ViewModel(), SensorEventListener {
         storageManager?.saveSettings(newSettings)
     }
 
+    fun setPPFDConversionFactor(factor: Float) {
+        val currentSettings = _state.value.settings
+        val newSettings = currentSettings.copy(ppfdConversionFactor = factor)
+        _state.value = _state.value.copy(settings = newSettings)
+        storageManager?.saveSettings(newSettings)
+    }
+
+    fun toggleDisplayMode() {
+        val currentMode = _state.value.displayMode
+        val newMode = if (currentMode == "lux") "ppfd" else "lux"
+        _state.value = _state.value.copy(displayMode = newMode)
+    }
+
     fun calculateLux(
         roomLength: Float,
         roomWidth: Float,
@@ -266,6 +283,17 @@ class LightMeterViewModel : ViewModel(), SensorEventListener {
     fun selectPlant(plant: Plant) {
         _state.value = _state.value.copy(selectedPlant = plant, showPlantSelector = false)
         storageManager?.saveSelectedPlantId(plant.id)
+    }
+    
+    fun updatePlant(plant: Plant) {
+        _state.value = _state.value.copy(selectedPlant = plant)
+        storageManager?.saveSelectedPlantId(plant.id)
+        
+        val currentCustomPlants = storageManager?.loadCustomPlants() ?: emptyMap()
+        val updatedCustomPlants = currentCustomPlants.toMutableMap()
+        updatedCustomPlants[plant.id] = plant
+        storageManager?.saveCustomPlants(updatedCustomPlants)
+        DataRepository.setCustomPlants(updatedCustomPlants)
     }
 
     fun togglePlantSelector() {
