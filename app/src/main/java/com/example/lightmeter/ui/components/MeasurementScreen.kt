@@ -40,6 +40,7 @@ import android.graphics.Rect
 import android.text.TextPaint
 import com.example.lightmeter.data.DataPoint
 import com.example.lightmeter.data.LightMeasurement
+import com.example.lightmeter.data.LightSource
 import com.example.lightmeter.ui.theme.*
 import com.example.lightmeter.ui.icons.CustomIcons
 
@@ -55,6 +56,7 @@ fun MeasurementScreen(
     onDeleteRecord: (Int) -> Unit,
     onSelectRecord: (Int) -> Unit,
     onClearRecordSelection: () -> Unit,
+    lightSource: LightSource,
     modifier: Modifier = Modifier
 ) {
     val luxLevel = getLuxLevel(currentLux)
@@ -68,7 +70,8 @@ fun MeasurementScreen(
     ) {
         RealtimeLuxDisplay(
             lux = currentLux,
-            level = luxLevel
+            level = luxLevel,
+            lightSource = lightSource
         )
         
         MeasurementControls(
@@ -110,6 +113,7 @@ fun MeasurementScreen(
 fun RealtimeLuxDisplay(
     lux: Float,
     level: LuxLevel,
+    lightSource: LightSource,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -127,7 +131,13 @@ fun RealtimeLuxDisplay(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                imageVector = CustomIcons.Sun,
+                imageVector = when (lightSource) {
+                    LightSource.LED -> CustomIcons.Lightbulb
+                    LightSource.DIFFUSED -> CustomIcons.CloudSun
+                    LightSource.DIRECT -> CustomIcons.Sun
+                    LightSource.SOURCE_4 -> CustomIcons.Sun
+                    LightSource.SOURCE_5 -> CustomIcons.Sun
+                },
                 contentDescription = null,
                 modifier = Modifier.size(48.dp),
                 tint = level.iconColor

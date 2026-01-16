@@ -163,7 +163,10 @@ class LightMeterViewModel : ViewModel(), SensorEventListener {
             if (it.sensor.type == Sensor.TYPE_LIGHT) {
                 val rawLux = it.values[0]
                 val settings = _state.value.settings
-                val calibratedLux = (rawLux * settings.calibrationMultiplier + settings.calibrationOffset).coerceAtLeast(0f)
+                
+                val hour = Calendar.getInstance().get(Calendar.HOUR_OF_DAY)
+                val calibration = getCalibrationForLightSource(settings, rawLux, hour)
+                val calibratedLux = (rawLux * calibration.multiplier + calibration.offset).coerceAtLeast(0f)
                 
                 val currentState = _state.value
                 val newState = currentState.copy(currentLux = calibratedLux)
@@ -216,9 +219,42 @@ class LightMeterViewModel : ViewModel(), SensorEventListener {
         storageManager?.saveSettings(newSettings)
     }
 
-    fun setPPFDConversionFactor(factor: Float) {
+    fun setCalibrationMode(mode: CalibrationMode) {
         val currentSettings = _state.value.settings
-        val newSettings = currentSettings.copy(ppfdConversionFactor = factor)
+        val newSettings = currentSettings.copy(calibrationMode = mode)
+        _state.value = _state.value.copy(settings = newSettings)
+        storageManager?.saveSettings(newSettings)
+    }
+
+    fun setManualLightSource(source: LightSource) {
+        val currentSettings = _state.value.settings
+        val newSettings = currentSettings.copy(manualLightSource = source)
+        _state.value = _state.value.copy(settings = newSettings)
+        storageManager?.saveSettings(newSettings)
+    }
+
+    fun setLightCalibration(source: LightSource, multiplier: Float, offset: Float) {
+        val currentSettings = _state.value.settings
+        val newSettings = when (source) {
+            LightSource.LED -> currentSettings.copy(ledCalibration = LightCalibration(multiplier, offset, currentSettings.ledCalibration.ppfdConversionFactor))
+            LightSource.DIFFUSED -> currentSettings.copy(diffusedCalibration = LightCalibration(multiplier, offset, currentSettings.diffusedCalibration.ppfdConversionFactor))
+            LightSource.DIRECT -> currentSettings.copy(directCalibration = LightCalibration(multiplier, offset, currentSettings.directCalibration.ppfdConversionFactor))
+            LightSource.SOURCE_4 -> currentSettings.copy(source4Calibration = LightCalibration(multiplier, offset, currentSettings.source4Calibration.ppfdConversionFactor))
+            LightSource.SOURCE_5 -> currentSettings.copy(source5Calibration = LightCalibration(multiplier, offset, currentSettings.source5Calibration.ppfdConversionFactor))
+        }
+        _state.value = _state.value.copy(settings = newSettings)
+        storageManager?.saveSettings(newSettings)
+    }
+
+    fun setLightPPFD(source: LightSource, ppfdFactor: Float) {
+        val currentSettings = _state.value.settings
+        val newSettings = when (source) {
+            LightSource.LED -> currentSettings.copy(ledCalibration = currentSettings.ledCalibration.copy(ppfdConversionFactor = ppfdFactor))
+            LightSource.DIFFUSED -> currentSettings.copy(diffusedCalibration = currentSettings.diffusedCalibration.copy(ppfdConversionFactor = ppfdFactor))
+            LightSource.DIRECT -> currentSettings.copy(directCalibration = currentSettings.directCalibration.copy(ppfdConversionFactor = ppfdFactor))
+            LightSource.SOURCE_4 -> currentSettings.copy(source4Calibration = currentSettings.source4Calibration.copy(ppfdConversionFactor = ppfdFactor))
+            LightSource.SOURCE_5 -> currentSettings.copy(source5Calibration = currentSettings.source5Calibration.copy(ppfdConversionFactor = ppfdFactor))
+        }
         _state.value = _state.value.copy(settings = newSettings)
         storageManager?.saveSettings(newSettings)
     }

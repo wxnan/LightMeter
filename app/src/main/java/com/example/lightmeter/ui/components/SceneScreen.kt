@@ -25,6 +25,7 @@ fun SceneScreen(
     showSelector: Boolean,
     onToggleSelector: () -> Unit,
     onSelectScene: (SceneType) -> Unit,
+    lightSource: LightSource,
     modifier: Modifier = Modifier
 ) {
     val status = getSceneLuxStatus(currentLux, selectedScene)
@@ -44,7 +45,7 @@ fun SceneScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            RealtimeLuxDisplayScene(currentLux, status)
+            RealtimeLuxDisplayScene(currentLux, status, lightSource)
             
             SceneSelectorCard(
                 selectedScene = selectedScene,
@@ -60,6 +61,7 @@ fun SceneScreen(
 fun RealtimeLuxDisplayScene(
     lux: Float,
     status: SceneLuxStatus,
+    lightSource: LightSource,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -77,7 +79,13 @@ fun RealtimeLuxDisplayScene(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                imageVector = CustomIcons.Sun,
+                imageVector = when (lightSource) {
+                    LightSource.LED -> CustomIcons.Lightbulb
+                    LightSource.DIFFUSED -> CustomIcons.CloudSun
+                    LightSource.DIRECT -> CustomIcons.Sun
+                    LightSource.SOURCE_4 -> CustomIcons.Sun
+                    LightSource.SOURCE_5 -> CustomIcons.Sun
+                },
                 contentDescription = null,
                 modifier = Modifier.size(48.dp),
                 tint = status.iconColor

@@ -25,7 +25,7 @@ import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.lightmeter.data.ThemeMode
+import com.example.lightmeter.data.*
 import com.example.lightmeter.ui.components.*
 import com.example.lightmeter.ui.theme.LightMeterTheme
 
@@ -124,6 +124,8 @@ fun LightMeterApp(
         ) {
             when (currentTab) {
                 TabType.MEASUREMENT -> {
+                    val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+                    val lightSource = getCurrentLightSource(state.settings, state.currentLux, hour)
                     MeasurementScreen(
                         currentLux = state.currentLux,
                         isRecording = state.isRecording,
@@ -134,7 +136,8 @@ fun LightMeterApp(
                         onSaveRecord = { viewModel.saveRecord(it) },
                         onDeleteRecord = { viewModel.deleteRecord(it) },
                         onSelectRecord = { viewModel.selectRecord(it) },
-                        onClearRecordSelection = { viewModel.clearRecordSelection() }
+                        onClearRecordSelection = { viewModel.clearRecordSelection() },
+                        lightSource = lightSource
                     )
                 }
                 TabType.CALCULATOR -> {
@@ -148,6 +151,9 @@ fun LightMeterApp(
                 }
                 TabType.PLANT -> {
                     val selectedPlant = state.selectedPlant ?: com.example.lightmeter.data.DataRepository.getAllPlants()[0]
+                    val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+                    val ppfdFactor = getPPFDConversionFactor(state.settings, state.currentLux, hour)
+                    val lightSource = getCurrentLightSource(state.settings, state.currentLux, hour)
                     PlantScreen(
                         currentLux = state.currentLux,
                         selectedPlant = selectedPlant,
@@ -156,18 +162,22 @@ fun LightMeterApp(
                         onSelectPlant = { viewModel.selectPlant(it) },
                         onUpdatePlant = { viewModel.updatePlant(it) },
                         displayMode = state.displayMode,
-                        ppfdConversionFactor = state.settings.ppfdConversionFactor,
-                        onToggleDisplayMode = { viewModel.toggleDisplayMode() }
+                        ppfdConversionFactor = ppfdFactor,
+                        onToggleDisplayMode = { viewModel.toggleDisplayMode() },
+                        lightSource = lightSource
                     )
                 }
                 TabType.SCENE -> {
                     val selectedScene = state.selectedScene ?: com.example.lightmeter.data.DataRepository.scenes[0]
+                    val hour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
+                    val lightSource = getCurrentLightSource(state.settings, state.currentLux, hour)
                     SceneScreen(
                         currentLux = state.currentLux,
                         selectedScene = selectedScene,
                         showSelector = state.showSceneSelector,
                         onToggleSelector = { viewModel.toggleSceneSelector() },
-                        onSelectScene = { viewModel.selectScene(it) }
+                        onSelectScene = { viewModel.selectScene(it) },
+                        lightSource = lightSource
                     )
                 }
                 TabType.SETTINGS -> {
@@ -177,8 +187,17 @@ fun LightMeterApp(
                         onCalibrationChange = { multiplier, offset ->
                             viewModel.setCalibration(multiplier, offset)
                         },
-                        onPPFDChange = { factor ->
-                            viewModel.setPPFDConversionFactor(factor)
+                        onCalibrationModeChange = { mode ->
+                            viewModel.setCalibrationMode(mode)
+                        },
+                        onManualLightSourceChange = { source ->
+                            viewModel.setManualLightSource(source)
+                        },
+                        onLightCalibrationChange = { source, multiplier, offset ->
+                            viewModel.setLightCalibration(source, multiplier, offset)
+                        },
+                        onLightPPFDChange = { source, factor ->
+                            viewModel.setLightPPFD(source, factor)
                         }
                     )
                 }

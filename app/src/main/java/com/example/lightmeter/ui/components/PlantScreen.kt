@@ -32,6 +32,7 @@ fun PlantScreen(
     displayMode: String = "lux",
     ppfdConversionFactor: Float = 0.0185f,
     onToggleDisplayMode: () -> Unit = {},
+    lightSource: LightSource,
     modifier: Modifier = Modifier
 ) {
     val status = getPlantLuxStatus(currentLux, selectedPlant, displayMode, ppfdConversionFactor)
@@ -58,7 +59,8 @@ fun PlantScreen(
                 status = status,
                 displayMode = displayMode,
                 ppfdConversionFactor = ppfdConversionFactor,
-                onToggleDisplayMode = onToggleDisplayMode
+                onToggleDisplayMode = onToggleDisplayMode,
+                lightSource = lightSource
             )
             
             PlantSelectorCard(
@@ -95,6 +97,7 @@ fun RealtimeLuxDisplayPlant(
     displayMode: String = "lux",
     ppfdConversionFactor: Float = 0.0185f,
     onToggleDisplayMode: () -> Unit = {},
+    lightSource: LightSource,
     modifier: Modifier = Modifier
 ) {
     val ppfd = lux * ppfdConversionFactor
@@ -118,7 +121,13 @@ fun RealtimeLuxDisplayPlant(
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
             Icon(
-                imageVector = CustomIcons.Sun,
+                imageVector = when (lightSource) {
+                    LightSource.LED -> CustomIcons.Lightbulb
+                    LightSource.DIFFUSED -> CustomIcons.CloudSun
+                    LightSource.DIRECT -> CustomIcons.Sun
+                    LightSource.SOURCE_4 -> CustomIcons.Sun
+                    LightSource.SOURCE_5 -> CustomIcons.Sun
+                },
                 contentDescription = null,
                 modifier = Modifier.size(48.dp),
                 tint = status.iconColor

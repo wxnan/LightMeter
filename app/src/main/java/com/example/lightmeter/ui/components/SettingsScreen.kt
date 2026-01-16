@@ -34,16 +34,19 @@ fun SettingsScreen(
     settings: AppSettings,
     onThemeChange: (ThemeMode) -> Unit,
     onCalibrationChange: (Float, Float) -> Unit,
-    onPPFDChange: (Float) -> Unit,
+    onCalibrationModeChange: (CalibrationMode) -> Unit,
+    onManualLightSourceChange: (LightSource) -> Unit,
+    onLightCalibrationChange: (LightSource, Float, Float) -> Unit,
+    onLightPPFDChange: (LightSource, Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showCalibration by remember { mutableStateOf(false) }
     var showPPFD by remember { mutableStateOf(false) }
+    var showLightSource by remember { mutableStateOf(false) }
     var showGuide by remember { mutableStateOf(false) }
     var showFAQ by remember { mutableStateOf(false) }
     var tempMultiplier by remember { mutableStateOf(settings.calibrationMultiplier.toString()) }
     var tempOffset by remember { mutableStateOf(settings.calibrationOffset.toString()) }
-    var tempPPFDFactor by remember { mutableStateOf(settings.ppfdConversionFactor.toString()) }
     
     Column(
         modifier = modifier
@@ -52,36 +55,33 @@ fun SettingsScreen(
             .padding(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 24.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
-        // SettingsHeader()
+        SettingsHeader()
         
         ThemeSettings(
             currentTheme = settings.theme,
             onThemeChange = onThemeChange
         )
         
+        LightSourceSettings(
+            showSettings = showLightSource,
+            settings = settings,
+            onToggleShow = { showLightSource = !showLightSource },
+            onCalibrationModeChange = onCalibrationModeChange,
+            onManualLightSourceChange = onManualLightSourceChange
+        )
+        
         CalibrationSettings(
             showCalibration = showCalibration,
-            multiplier = tempMultiplier,
-            offset = tempOffset,
+            settings = settings,
             onToggleShow = { showCalibration = !showCalibration },
-            onMultiplierChange = { tempMultiplier = it },
-            onOffsetChange = { tempOffset = it },
-            onSave = {
-                val multiplier = tempMultiplier.toFloatOrNull() ?: 1f
-                val offset = tempOffset.toFloatOrNull() ?: 0f
-                onCalibrationChange(multiplier, offset)
-            }
+            onLightCalibrationChange = onLightCalibrationChange
         )
         
         PPFDSettings(
             showPPFD = showPPFD,
-            factor = tempPPFDFactor,
+            settings = settings,
             onToggleShow = { showPPFD = !showPPFD },
-            onFactorChange = { tempPPFDFactor = it },
-            onSave = {
-                val factor = tempPPFDFactor.toFloatOrNull() ?: 0.0185f
-                onPPFDChange(factor)
-            }
+            onLightPPFDChange = onLightPPFDChange
         )
         
         GuideSettings(
@@ -103,22 +103,23 @@ fun SettingsScreen(
 @Composable
 fun SettingsHeader(modifier: Modifier = Modifier) {
     Card(
-        modifier = modifier
-            .fillMaxWidth()
-            .drawBehind {
-                val gradient = Brush.linearGradient(
-                    colors = listOf(
-                        Gray50,
-                        Slate50
-                    ),
-                    start = Offset(0f, 0f),
-                    end = Offset(0f, size.height)
-                )
-                drawRect(gradient)
-            },
+//        modifier = modifier
+//            .fillMaxWidth()
+//            .drawBehind {
+//                val gradient = Brush.linearGradient(
+//                    colors = listOf(
+//                        Gray50,
+//                        Slate50
+//                    ),
+//                    start = Offset(0f, 0f),
+//                    end = Offset(0f, size.height)
+//                )
+//                drawRect(gradient)
+//            },
+        modifier = modifier.fillMaxWidth(),
         shape = RoundedCornerShape(24.dp),
         colors = CardDefaults.cardColors(
-            containerColor = Color.Transparent
+            containerColor = MaterialTheme.colorScheme.surface
         ),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp)
     ) {
@@ -136,20 +137,20 @@ fun SettingsHeader(modifier: Modifier = Modifier) {
                     imageVector = CustomIcons.Settings,
                     contentDescription = null,
                     modifier = Modifier.size(32.dp),
-                    tint = Gray700
+                    tint = MaterialTheme.colorScheme.onSurface
                 )
                 Spacer(modifier = Modifier.width(12.dp))
                 Text(
                     text = "设置",
                     style = MaterialTheme.typography.headlineMedium,
                     fontWeight = FontWeight.Bold,
-                    color = Gray900
+                    color = MaterialTheme.colorScheme.onSurface
                 )
             }
             Text(
-                text = "个性化您的照度测量体验",
+                text = "照度测量仪 - 科学用光，健康照明",
                 style = MaterialTheme.typography.bodyLarge,
-                color = Gray600
+                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
             )
         }
     }
@@ -262,12 +263,9 @@ fun ThemeButton(
 @Composable
 fun CalibrationSettings(
     showCalibration: Boolean,
-    multiplier: String,
-    offset: String,
+    settings: AppSettings,
     onToggleShow: () -> Unit,
-    onMultiplierChange: (String) -> Unit,
-    onOffsetChange: (String) -> Unit,
-    onSave: () -> Unit,
+    onLightCalibrationChange: (LightSource, Float, Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -301,7 +299,7 @@ fun CalibrationSettings(
                         Icon(
                             imageVector = CustomIcons.Gauge,
                             contentDescription = null,
-                            tint = Gray600
+                            tint = Purple500
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
@@ -348,80 +346,40 @@ fun CalibrationSettings(
                         }
                     }
                     
-                    OutlinedTextField(
-                        value = multiplier,
-                        onValueChange = onMultiplierChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("校准倍数（默认 1.0）") },
-                        placeholder = { Text("1.0") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    Text(
-                        text = "范围：0.5 - 2.0，用于整体比例调整",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray500
+                    LightSourceCalibrationItem(
+                        title = "LED灯",
+                        calibration = settings.ledCalibration,
+                        lightSource = LightSource.LED,
+                        onCalibrationChange = onLightCalibrationChange
                     )
                     
-                    OutlinedTextField(
-                        value = offset,
-                        onValueChange = onOffsetChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("校准偏移（默认 0 lux）") },
-                        placeholder = { Text("0") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    Text(
-                        text = "正值表示当前测量偏低，负值表示偏高",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray500
+                    LightSourceCalibrationItem(
+                        title = "散射光",
+                        calibration = settings.diffusedCalibration,
+                        lightSource = LightSource.DIFFUSED,
+                        onCalibrationChange = onLightCalibrationChange
                     )
                     
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Button(
-                            onClick = onSave,
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("保存校准")
-                        }
-                        OutlinedButton(
-                            onClick = {
-                                onMultiplierChange("1")
-                                onOffsetChange("0")
-                                onSave()
-                            },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("重置")
-                        }
-                    }
+                    LightSourceCalibrationItem(
+                        title = "直射光",
+                        calibration = settings.directCalibration,
+                        lightSource = LightSource.DIRECT,
+                        onCalibrationChange = onLightCalibrationChange
+                    )
                     
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)
-                        ),
-                        shape = RoundedCornerShape(12.dp)
-                    ) {
-                        Column(modifier = Modifier.padding(12.dp)) {
-                            Text(
-                                text = "💡 校准示例：",
-                                color = MaterialTheme.colorScheme.onSurface,
-                                style = MaterialTheme.typography.titleSmall,
-                                fontWeight = FontWeight.Bold
-                            )
-                            Text(
-                                text = "• 专业照度计显示500 lux，手机显示450 lux\n• 校准倍数 = 500 ÷ 450 ≈ 1.11\n• 或使用偏移 = 500 - 450 = 50 lux",
-                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                        }
-                    }
+                    LightSourceCalibrationItem(
+                        title = "光源4",
+                        calibration = settings.source4Calibration,
+                        lightSource = LightSource.SOURCE_4,
+                        onCalibrationChange = onLightCalibrationChange
+                    )
+                    
+                    LightSourceCalibrationItem(
+                        title = "光源5",
+                        calibration = settings.source5Calibration,
+                        lightSource = LightSource.SOURCE_5,
+                        onCalibrationChange = onLightCalibrationChange
+                    )
                 }
             }
         }
@@ -431,10 +389,9 @@ fun CalibrationSettings(
 @Composable
 fun PPFDSettings(
     showPPFD: Boolean,
-    factor: String,
+    settings: AppSettings,
     onToggleShow: () -> Unit,
-    onFactorChange: (String) -> Unit,
-    onSave: () -> Unit,
+    onLightPPFDChange: (LightSource, Float) -> Unit,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -466,9 +423,9 @@ fun PPFDSettings(
                 ) {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Icon(
-                            imageVector = CustomIcons.Sun,
+                            imageVector = CustomIcons.Leaf,
                             contentDescription = null,
-                            tint = Orange500
+                            tint = Green500
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
@@ -508,50 +465,47 @@ fun PPFDSettings(
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
-                                text = "PPFD (μmol/m²·s) = Lux × 换算系数",
+                                text = "PPFD (μmol/m²·s) = Lux * 换算系数",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
                             )
                         }
                     }
                     
-                    OutlinedTextField(
-                        value = factor,
-                        onValueChange = onFactorChange,
-                        modifier = Modifier.fillMaxWidth(),
-                        label = { Text("换算系数（默认 0.0185）") },
-                        placeholder = { Text("0.0185") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-                        shape = RoundedCornerShape(12.dp)
-                    )
-                    Text(
-                        text = "阳光直射：0.0185，室内LED：0.012-0.015",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = Gray500
+                    LightSourcePPFDItem(
+                        title = "LED灯",
+                        calibration = settings.ledCalibration,
+                        lightSource = LightSource.LED,
+                        onPPFDChange = onLightPPFDChange
                     )
                     
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.spacedBy(12.dp)
-                    ) {
-                        Button(
-                            onClick = onSave,
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("保存设置")
-                        }
-                        OutlinedButton(
-                            onClick = {
-                                onFactorChange("0.0185")
-                                onSave()
-                            },
-                            modifier = Modifier.weight(1f),
-                            shape = RoundedCornerShape(12.dp)
-                        ) {
-                            Text("重置")
-                        }
-                    }
+                    LightSourcePPFDItem(
+                        title = "散射光",
+                        calibration = settings.diffusedCalibration,
+                        lightSource = LightSource.DIFFUSED,
+                        onPPFDChange = onLightPPFDChange
+                    )
+                    
+                    LightSourcePPFDItem(
+                        title = "直射光",
+                        calibration = settings.directCalibration,
+                        lightSource = LightSource.DIRECT,
+                        onPPFDChange = onLightPPFDChange
+                    )
+                    
+                    LightSourcePPFDItem(
+                        title = "光源4",
+                        calibration = settings.source4Calibration,
+                        lightSource = LightSource.SOURCE_4,
+                        onPPFDChange = onLightPPFDChange
+                    )
+                    
+                    LightSourcePPFDItem(
+                        title = "光源5",
+                        calibration = settings.source5Calibration,
+                        lightSource = LightSource.SOURCE_5,
+                        onPPFDChange = onLightPPFDChange
+                    )
                     
                     Card(
                         colors = CardDefaults.cardColors(
@@ -567,7 +521,7 @@ fun PPFDSettings(
                                 fontWeight = FontWeight.Bold
                             )
                             Text(
-                                text = "PPFD（光合有效辐射密度）是衡量植物可利用光能的指标。不同光源的换算系数不同，阳光直射约为0.0185，室内LED灯约为0.012-0.015。\n植物页面，点击实时照度显示卡片，可以进行切换。",
+                                text = "PPFD（光合有效辐射密度）是衡量植物可利用光能的指标。不同光源的换算系数不同，阳光直射约为0.0185，普通LED灯约为0.012-0.015。\n植物页面，点击实时照度显示卡片，可以进行切换。",
                                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f),
                                 style = MaterialTheme.typography.bodyMedium
                             )
@@ -735,7 +689,7 @@ fun FAQSettings(
                         Icon(
                             imageVector = CustomIcons.Question,
                             contentDescription = null,
-                            tint = MaterialTheme.colorScheme.secondary
+                            tint = Orange500
                         )
                         Spacer(modifier = Modifier.width(12.dp))
                         Text(
@@ -770,6 +724,10 @@ fun FAQSettings(
                         answer = "A: 查看手机传感器是否有遮挡，如污染物、手机贴膜等。使用校准功能可提高准确度。"
                     )
                     FAQItem(
+                        question = "Q: 适合测量哪些光源？",
+                        answer = "A: 手机测量照度的APP适合测量普通LED灯等常见人造光源和太阳直射光。测量单色光等特殊光源和太阳散射光时误差可能较大。"
+                    )
+                    FAQItem(
                         question = "Q: 数值一直在变动？",
                         answer = "A: 这是正常现象。光线会随时间、角度变化。建议记录稳定时的平均值。"
                     )
@@ -795,7 +753,7 @@ fun FAQSettings(
                     )
                     FAQItem(
                         question = "Q: 场景照度推荐值范围？",
-                        answer = "A: 房间照度不能低于推荐值范围的最小值，可以适当高于推荐值范围的最大值。"
+                        answer = "A: 房间照度不能低于推荐值范围的最小值，建议在推荐值范围内，可以适当高于推荐值范围的最大值。"
                     )
                     FAQItem(
                         question = "Q: 植物照度推荐值范围？",
@@ -1015,6 +973,499 @@ fun VersionInfo(modifier: Modifier = Modifier) {
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f)
             )
+        }
+    }
+}
+
+@Composable
+fun LightSourceSettings(
+    showSettings: Boolean,
+    settings: AppSettings,
+    onToggleShow: () -> Unit,
+    onCalibrationModeChange: (CalibrationMode) -> Unit,
+    onManualLightSourceChange: (LightSource) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = onToggleShow,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 16.dp),
+                shape = RoundedCornerShape(0.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = CustomIcons.Sun,
+                            contentDescription = null,
+                            tint = Orange500
+                        )
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            text = "光源设置",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                    }
+                    Icon(
+                        imageVector = if (showSettings) CustomIcons.ExpandLess else CustomIcons.ExpandMore,
+                        contentDescription = null,
+                        tint = Gray400
+                    )
+                }
+            }
+            
+            if (showSettings) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surfaceVariant)
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                ) {
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.primary.copy(alpha = 0.2f)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(12.dp)) {
+                            Text(
+                                text = "💡 光源设置说明：",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface
+                            )
+                            Text(
+                                text = "不同光源的传感器响应特性不同，需要分别校准。自动识别模式会根据时间和照度值自动选择光源类型（LED灯、散射光、直射光）。实时显示照度页面会根据光源类型显示对应图标。",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.75f)
+                            )
+                        }
+                    }
+                    
+                    Card(
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.secondary.copy(alpha = 0.2f)
+                        ),
+                        shape = RoundedCornerShape(12.dp)
+                    ) {
+                        Column(modifier = Modifier.padding(16.dp)) {
+                            Text(
+                                text = "光源选择",
+                                style = MaterialTheme.typography.titleSmall,
+                                fontWeight = FontWeight.Bold,
+                                color = MaterialTheme.colorScheme.onSurface,
+                                modifier = Modifier.padding(bottom = 12.dp)
+                            )
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.spacedBy(12.dp)
+                            ) {
+                                CalibrationModeButton(
+                                    text = "自动识别",
+                                    selected = settings.calibrationMode == CalibrationMode.AUTO,
+                                    onClick = { onCalibrationModeChange(CalibrationMode.AUTO) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                                CalibrationModeButton(
+                                    text = "手动选择",
+                                    selected = settings.calibrationMode == CalibrationMode.MANUAL,
+                                    onClick = { onCalibrationModeChange(CalibrationMode.MANUAL) },
+                                    modifier = Modifier.weight(1f)
+                                )
+                            }
+                        }
+                    }
+                    
+                    if (settings.calibrationMode == CalibrationMode.MANUAL) {
+                        Card(
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.tertiary.copy(alpha = 0.2f)
+                            ),
+                            shape = RoundedCornerShape(12.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Text(
+                                    text = "手动选择光源",
+                                    style = MaterialTheme.typography.titleSmall,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    modifier = Modifier.padding(bottom = 12.dp)
+                                )
+                                Column(
+                                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    LightSourceButton(
+                                        text = "LED灯",
+                                        icon = CustomIcons.Lightbulb,
+                                        selected = settings.manualLightSource == LightSource.LED,
+                                        onClick = { onManualLightSourceChange(LightSource.LED) }
+                                    )
+                                    LightSourceButton(
+                                        text = "散射光",
+                                        icon = CustomIcons.CloudSun,
+                                        selected = settings.manualLightSource == LightSource.DIFFUSED,
+                                        onClick = { onManualLightSourceChange(LightSource.DIFFUSED) }
+                                    )
+                                    LightSourceButton(
+                                        text = "直射光",
+                                        icon = CustomIcons.Sun,
+                                        selected = settings.manualLightSource == LightSource.DIRECT,
+                                        onClick = { onManualLightSourceChange(LightSource.DIRECT) }
+                                    )
+                                    LightSourceButton(
+                                        text = "光源4",
+                                        icon = CustomIcons.Sun,
+                                        selected = settings.manualLightSource == LightSource.SOURCE_4,
+                                        onClick = { onManualLightSourceChange(LightSource.SOURCE_4) }
+                                    )
+                                    LightSourceButton(
+                                        text = "光源5",
+                                        icon = CustomIcons.Sun,
+                                        selected = settings.manualLightSource == LightSource.SOURCE_5,
+                                        onClick = { onManualLightSourceChange(LightSource.SOURCE_5) }
+                                    )
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun CalibrationModeButton(
+    text: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier,
+        shape = RoundedCornerShape(12.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (selected) Blue50 else MaterialTheme.colorScheme.surface,
+            contentColor = if (selected) Blue600 else Gray600
+        ),
+        border = if (selected) {
+            ButtonDefaults.outlinedButtonBorder.copy(
+                brush = Brush.horizontalGradient(listOf(Blue500, Blue500))
+            )
+        } else {
+            ButtonDefaults.outlinedButtonBorder.copy(
+                brush = Brush.horizontalGradient(listOf(Gray200, Gray200))
+            )
+        },
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold
+        )
+    }
+}
+
+@Composable
+fun LightSourceButton(
+    text: String,
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    selected: Boolean,
+    onClick: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Button(
+        onClick = onClick,
+        modifier = modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(8.dp),
+        colors = ButtonDefaults.buttonColors(
+            containerColor = if (selected) Blue50 else MaterialTheme.colorScheme.surface,
+            contentColor = if (selected) Blue600 else Gray600
+        ),
+        border = if (selected) {
+            ButtonDefaults.outlinedButtonBorder.copy(
+                brush = Brush.horizontalGradient(listOf(Blue500, Blue500))
+            )
+        } else {
+            ButtonDefaults.outlinedButtonBorder.copy(
+                brush = Brush.horizontalGradient(listOf(Gray200, Gray200))
+            )
+        },
+        elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Start
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+                tint = if (selected) Blue600 else Gray600
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = text,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium
+            )
+        }
+    }
+}
+
+@Composable
+fun LightSourceCalibrationItem(
+    title: String,
+    calibration: LightCalibration,
+    lightSource: LightSource,
+    onCalibrationChange: (LightSource, Float, Float) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showDetails by remember { mutableStateOf(false) }
+    var tempMultiplier by remember { mutableStateOf(calibration.multiplier.toString()) }
+    var tempOffset by remember { mutableStateOf(calibration.offset.toString()) }
+    
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = { showDetails = !showDetails },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "×${calibration.multiplier} +${calibration.offset}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Gray500
+                        )
+                    }
+                    Icon(
+                        imageVector = if (showDetails) CustomIcons.ExpandLess else CustomIcons.ExpandMore,
+                        contentDescription = null,
+                        tint = Gray400,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+            
+            if (showDetails) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedTextField(
+                        value = tempMultiplier,
+                        onValueChange = { tempMultiplier = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("校准倍数") },
+                        placeholder = { Text("1.0") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        shape = RoundedCornerShape(8.dp),
+                        singleLine = true
+                    )
+                    
+                    OutlinedTextField(
+                        value = tempOffset,
+                        onValueChange = { tempOffset = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("校准偏移") },
+                        placeholder = { Text("0") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        shape = RoundedCornerShape(8.dp),
+                        singleLine = true
+                    )
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                val multiplier = tempMultiplier.toFloatOrNull() ?: 1f
+                                val offset = tempOffset.toFloatOrNull() ?: 0f
+                                onCalibrationChange(lightSource, multiplier, offset)
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("保存")
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                tempMultiplier = "1"
+                                tempOffset = "0"
+                                onCalibrationChange(lightSource, 1f, 0f)
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("重置")
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun LightSourcePPFDItem(
+    title: String,
+    calibration: LightCalibration,
+    lightSource: LightSource,
+    onPPFDChange: (LightSource, Float) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showDetails by remember { mutableStateOf(false) }
+    var tempPPFDFactor by remember { mutableStateOf(calibration.ppfdConversionFactor.toString()) }
+    
+    Card(
+        modifier = modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        shape = RoundedCornerShape(12.dp)
+    ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+            Button(
+                onClick = { showDetails = !showDetails },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(12.dp),
+                shape = RoundedCornerShape(8.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.surface
+                ),
+                elevation = ButtonDefaults.buttonElevation(defaultElevation = 0.dp)
+            ) {
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(
+                            text = title,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "×${calibration.ppfdConversionFactor}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = Gray500
+                        )
+                    }
+                    Icon(
+                        imageVector = if (showDetails) CustomIcons.ExpandLess else CustomIcons.ExpandMore,
+                        contentDescription = null,
+                        tint = Gray400,
+                        modifier = Modifier.size(20.dp)
+                    )
+                }
+            }
+            
+            if (showDetails) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .background(MaterialTheme.colorScheme.surface)
+                        .padding(12.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    OutlinedTextField(
+                        value = tempPPFDFactor,
+                        onValueChange = { tempPPFDFactor = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        label = { Text("PPFD换算系数") },
+                        placeholder = { Text("0.0185") },
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                        shape = RoundedCornerShape(8.dp),
+                        singleLine = true
+                    )
+                    Text(
+                        text = "阳光直射：0.0185，室内LED：0.012-0.015",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = Gray500
+                    )
+                    
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        Button(
+                            onClick = {
+                                val factor = tempPPFDFactor.toFloatOrNull() ?: 0.0185f
+                                onPPFDChange(lightSource, factor)
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("保存")
+                        }
+                        OutlinedButton(
+                            onClick = {
+                                tempPPFDFactor = "0.0185"
+                                onPPFDChange(lightSource, 0.0185f)
+                            },
+                            modifier = Modifier.weight(1f),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text("重置")
+                        }
+                    }
+                }
+            }
         }
     }
 }
